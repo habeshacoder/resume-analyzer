@@ -1,0 +1,322 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "resume-upload",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b4a151d6-3957-4c56-b76e-80fec10e76cc",
+      "name": "Webhook",
+      "webhookId": "be10d810-f901-467e-9f02-ada681d99089"
+    },
+    {
+      "parameters": {
+        "command": "=java -jar /opt/tika/tika-app-2.9.4.jar -t {{$json[\"body\"][\"file_path\"]}}"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        220,
+        0
+      ],
+      "id": "c67b8b20-907a-43a0-aeb9-efe058024d63",
+      "name": "Execute Command",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "Extract the following details from this resume:\nfilename TEXT,\nfull_name TEXT,\nemail TEXT,\nphone TEXT,\nskills TEXT[],\nexperience_years FLOAT,\nlast_job_title TEXT,"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        440,
+        0
+      ],
+      "id": "22b650ff-9bd5-4c3e-8661-892948b32578",
+      "name": "OpenAI",
+      "alwaysOutputData": true,
+      "credentials": {
+        "openAiApi": {
+          "id": "0c9KztJIXeApq336",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- Create the resumes table if it doesn't exist\nCREATE TABLE IF NOT EXISTS resumes (\n    id SERIAL PRIMARY KEY,\n    filename TEXT,\n    full_name TEXT,\n    email TEXT,\n    phone TEXT,\n    skills TEXT[],\n    experience_years FLOAT,\n    last_job_title TEXT,\n    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n);\n\n-- Insert the data dynamically from the OpenAI API response\nINSERT INTO resumes (filename, full_name, email, phone, skills, experience_years, last_job_title)\nVALUES (\n    '{{ $json[\"message\"][\"content\"][\"filename\"] }}',  \n    '{{ $json[\"message\"][\"content\"][\"full_name\"] }}',    \n    '{{ $json[\"message\"][\"content\"][\"email\"] }}',  \n    '{{ $json[\"message\"][\"content\"][\"phone\"] }}', \n    '{{ \"{\" + $json[\"message\"][\"content\"][\"skills\"].map(skill => `\"${skill}\"`).join(\",\") + \"}\" }}', \n    '{{ $json[\"message\"][\"content\"][\"experience_years\"] }}',  \n    '{{ $json[\"message\"][\"content\"][\"last_job_title\"] }}'\n)\nRETURNING *;",
+        "options": {
+          "connectionTimeout": 15,
+          "replaceEmptyStrings": true
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        800,
+        0
+      ],
+      "id": "34b15587-dfe5-4e31-aefd-2f189e448f14",
+      "name": "Postgres",
+      "alwaysOutputData": true,
+      "notesInFlow": true,
+      "credentials": {
+        "postgres": {
+          "id": "tXorjxzGJxrS6FHq",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1B6ZPphVm0ukukfJFqlxkJIcgqddJ5WBIBzZgHA8sGG8/edit",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Test_sheet",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "filename",
+              "displayName": "filename",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "full_name",
+              "displayName": "full_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "skills",
+              "displayName": "skills",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "experience_years",
+              "displayName": "experience_years",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "last_job_title",
+              "displayName": "last_job_title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "uploaded_at",
+              "displayName": "uploaded_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1020,
+        0
+      ],
+      "id": "5f1c753e-5c8e-4dea-97b5-97fbcccff5e8",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ptp3nd2JATDvrWDH",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "user",
+        "user": {
+          "__rl": true,
+          "value": "U065CQAMWN9",
+          "mode": "id"
+        },
+        "text": "A new resume has been submitted!",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        1240,
+        0
+      ],
+      "id": "882db28b-2092-4f44-bbb7-d5bee9ea79ed",
+      "name": "Slack",
+      "webhookId": "d4ce6eff-b486-411e-9b5e-a8cdd1af17e9",
+      "credentials": {
+        "slackApi": {
+          "id": "pzDE4P9SblJWMRaM",
+          "name": "Slack account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Execute Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Command": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Postgres",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "235bd936-81b9-445e-bdb4-efacc88ba003",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7067f7e776e849d11a5c66e5b7c96b0c0073a6bbe8e885eef0cad3c6d07ad77e"
+  },
+  "id": "fDA956XRlyn6iUiv",
+  "tags": []
+}
