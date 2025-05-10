@@ -2,18 +2,7 @@ from fastapi import FastAPI, HTTPException, Depends, UploadFile, File
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from auth import authenticate_user, create_access_token, verify_token
 from fastapi.responses import JSONResponse
-import requests
-from dotenv import load_dotenv
-import os
-
-# Load environment variables from .env file
-load_dotenv()
-
-UPLOAD_DIR = os.getenv("UPLOAD_DIR")
-N8N_WEBHOOK_URL = os.getenv("N8N_WEBHOOK_URL")
-
-# Create the upload directory if it doesn't exist
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+from upload import handle_upload  # Import the handle_upload function
 
 app = FastAPI()
 
@@ -51,22 +40,4 @@ async def upload_resume(
     except:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
-    if file.content_type != "application/pdf":
-        raise HTTPException(status_code=400, detail="Only PDF files are allowed.")
-
-    file_location = os.path.join(UPLOAD_DIR, file.filename)
-    with open(file_location, "wb") as f:
-        f.write(await file.read())
-
-    # Send to n8n
-    payload = {
-        "file_path": file_location,
-        "filename": file.filename,
-        "uploaded_by": username
-    }
-    try:
-        requests.post(N8N_WEBHOOK_URL, json=payload)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to notify n8n: {e}")
-
-    return JSONResponse(content={"message": f"File '{file.filename}' saved and sent to n8n."})
+    return await handle_upload(file, username)  # Call the function from upload.py
