@@ -21,14 +21,6 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
     token = create_access_token({"sub": username})
     return {"access_token": token}
 
-@app.get("/secure-test")
-def secure_test(token: str = Depends(oauth2_scheme)):
-    try:
-        payload = verify_token(token)
-        return {"message": "Secure endpoint accessed!", "user": payload["sub"]}
-    except:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
-
 @app.post("/upload")
 async def upload_resume(
     file: UploadFile = File(...),
