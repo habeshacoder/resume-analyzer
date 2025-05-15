@@ -1,6 +1,7 @@
 services:
   backend:
     build: ./backend
+    container_name: backend_c
     ports:
       - "8000:8000"
     volumes:
@@ -18,6 +19,7 @@ services:
 
   n8n:
     build: .
+    container_name: n8n_c
     ports:
       - "5678:5678"
     environment:
@@ -31,6 +33,7 @@ services:
 
   postgres:
     image: postgres:15
+    container_name: postgres_c
     restart: always
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
@@ -43,6 +46,7 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4
+    container_name: pgadmin_c
     environment:
       - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
       - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
