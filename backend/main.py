@@ -10,7 +10,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 @app.get("/")
 def read_root():
-    return {"message": "Resume Analyzer Backend is running now!"}
+    return {"message": "Resume Analyzer Backend is running successfully!"}
 
 @app.post("/auth/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends()):
